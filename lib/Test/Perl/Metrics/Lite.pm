@@ -1,7 +1,8 @@
 package Test::Perl::Metrics::Lite;
 use strict;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
+use List::MoreUtils qw(any);
 use Perl::Metrics::Lite;
 use Test::More ();
 use Test::Builder;
@@ -21,19 +22,26 @@ sub import {
 
     $TEST->exported_to($caller);
 
-    %METRICS_ARGS               = %args;
+    %METRICS_ARGS = %args;
     $METRICS_ARGS{-mccabe_complexity} ||= 10;
-    $METRICS_ARGS{-loc} ||= 60;
+    $METRICS_ARGS{-loc}               ||= 60;
 
     return 1;
 }
 
 sub all_code_files {
+    my @exceptions = @{ $METRICS_ARGS{-except} || [] };
     my @dirs = @_;
     if ( not @dirs ) {
         @dirs = _starting_points();
     }
+    @dirs = grep { !is_excluded( $_, @exceptions ) } @dirs;
     return \@dirs;
+}
+
+sub is_excluded {
+    my ( $path, @exceptions ) = @_;
+    any { $path eq $_ || $path =~ /$_/ } @exceptions;
 }
 
 sub _starting_points {
@@ -74,8 +82,8 @@ sub _all_files_metric_ok {
 
 sub _all_sub_metrics_ok {
     my $sub_metrics = shift;
-    my @rows = ();
-    my $ok   = 0;
+    my @rows        = ();
+    my $ok          = 0;
     foreach my $sub_metric ( @{$sub_metrics} ) {
         $ok = $ok or _sub_metric_ok($sub_metric);
     }
@@ -99,7 +107,9 @@ sub _sub_cc_ok {
         return 0;
     }
     else {
-        $TEST->ok( 0, $sub_metric->{name} . " is too complex" );
+        $TEST->ok( 0,
+            "The method is to complex! Detail: Path: $sub_metric->{path}, Method: $sub_metric->{name}, CC: ${cc}"
+        );
         return 1;
     }
 }
@@ -113,7 +123,9 @@ sub _sub_loc_ok {
         return 0;
     }
     else {
-        $TEST->ok( 0, $sub_metric->{name} . " loc is too long!: ${sloc}" );
+        $TEST->ok( 0,
+            "The method is too long! Detail: Path: $sub_metric->{path} ,Method: $sub_metric->{name}, SLOC: ${sloc}"
+        );
         return 1;
     }
 }
