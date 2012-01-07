@@ -23,3 +23,7 @@ META.yml
 README
 t/00_compile.t
 t/01_bacit.t
+t/02_except.t
+t/03_threshold.t
+t/lib/Bad/BadClass.pm
+t/lib/Good/GoodClass.pm
