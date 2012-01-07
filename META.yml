@@ -25,4 +25,4 @@ requires:
   Perl::Metrics::Lite: 0.061
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.03
+version: 0.1
